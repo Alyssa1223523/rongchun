@@ -107,7 +107,7 @@ body{
 .screen{position:absolute; inset:0; background:var(--bg); display:none; flex-direction:column; z-index:20; transform:translateY(24px); opacity:0; transition:.28s cubic-bezier(.2,.8,.2,1)}
 .screen.open{display:flex}
 .screen.show{transform:none; opacity:1}
-.shead{display:flex; align-items:center; gap:12px; padding:16px 16px 12px; border-bottom:1px solid var(--line); background:var(--panel)}
+.shead{display:flex; align-items:center; gap:12px; padding:16px 16px 12px; border-bottom:1px solid var(--line); background:var(--panel); position:sticky; top:0; z-index:60; padding-top:calc(16px + env(safe-area-inset-top))}
 .shead .back{width:34px; height:34px; border-radius:10px; border:1px solid var(--line); background:var(--panel2);
   display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--text); flex:none}
 .shead .back:active{transform:scale(.92)}
@@ -409,7 +409,6 @@ textarea{resize:none; min-height:90px; line-height:1.7}
 .book-ans{margin-top:28px;width:82%;min-height:46px;font-size:20px;font-weight:700;color:#5a3a44;text-align:center;opacity:0;transform:translateY(10px);transition:all .45s;line-height:1.5}
 .book-ans.show{opacity:1;transform:translateY(0)}
 .book-count{margin-top:auto;padding-bottom:22px;font-size:11px;color:#c4b5ba}
-.sbody{padding-bottom:env(safe-area-inset-bottom)}
 </style>
 </head>
 <body>
