@@ -1,0 +1,15 @@
+{
+  "name": "融椿",
+  "short_name": "融椿",
+  "description": "椿璟 × 傅融 的专属空间",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#2c2126",
+  "theme_color": "#f291ac",
+  "icons": [
+    {"src": "icon.png", "sizes": "180x180", "type": "image/png"},
+    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png"}
+  ]
+}
