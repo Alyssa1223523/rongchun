@@ -416,6 +416,12 @@ textarea{resize:none; min-height:90px; line-height:1.7}
 .book-ans{margin-top:28px;width:82%;min-height:46px;font-size:20px;font-weight:700;color:#5a3a44;text-align:center;opacity:0;transform:translateY(10px);transition:all .45s;line-height:1.5}
 .book-ans.show{opacity:1;transform:translateY(0)}
 .book-count{margin-top:auto;padding-bottom:22px;font-size:11px;color:#c4b5ba}
+#cb-min{position:absolute;top:calc(env(safe-area-inset-top) + 14px);right:16px;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.16);display:none;align-items:center;justify-content:center;z-index:6;cursor:pointer;-webkit-tap-highlight-color:transparent}
+#cb-min:active{background:rgba(255,255,255,.3)}
+#callFloat{position:fixed;top:calc(env(safe-area-inset-top) + 58px);right:14px;z-index:9998;display:none;flex-direction:column;align-items:center;background:rgba(28,20,24,.94);border-radius:20px;padding:9px 9px 7px;box-shadow:0 6px 18px rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.14);cursor:pointer;animation:cfpop .25s;-webkit-tap-highlight-color:transparent}
+@keyframes cfpop{0%{transform:scale(.5);opacity:0}100%{transform:scale(1);opacity:1}}
+#callFloat .cf-av .avatar{width:46px;height:46px;font-size:21px}
+#callFloat .cf-t{font-size:10px;color:#ffd0de;margin-top:5px;font-variant-numeric:tabular-nums;max-width:64px;text-align:center;line-height:1.3}
 </style>
 </head>
 <body>
@@ -1923,10 +1929,6 @@ function renderSettings(){
       <button class="mini-btn" onclick="exportAll()">导出</button></div>
     <div class="set-item"><div class="lab">全量导入</div>
       <button class="mini-btn" onclick="importAll()">导入</button></div>
-    <div class="set-item"><div class="lab">复制备份<small>打包到剪贴板，适合搬去线上版</small></div>
-      <button class="mini-btn" onclick="copyBackup()">复制</button></div>
-    <div class="set-item"><div class="lab">剪贴板导入<small>读取剪贴板里的备份</small></div>
-      <button class="mini-btn" onclick="pasteBackup()">导入</button></div>
     <div class="set-item"><div class="lab">重置所有数据<small>恢复出厂状态</small></div>
       <button class="mini-btn" style="border-color:#a33;color:#a33" onclick="resetAll()">重置</button></div>
     <input type="file" id="all-file" accept=".json" style="display:none" onchange="allFileChange(event)">
@@ -1958,32 +1960,6 @@ function addMember(){ S.settings.members.push({name:'群员'+(S.settings.members
 function delMember(i){ S.settings.members.splice(i,1); if(!S.settings.members.length) S.settings.members.push({name:'对方'}); save(); renderMembers(); }
 function clearMsgs(){ S.msgs=[]; save(); renderMsgs(); toast('聊天记录已清空'); }
 function exportAll(){ download(JSON.stringify(S,null,2),'融椿备份.json'); }
-async function copyBackup(){
-  try{
-    const data={app:'rongchun',v:1,ts:Date.now(),settings:S.settings,msgs:S.msgs.slice(-8000),album:S.album||[],profile:S.profile,weibo:S.weibo};
-    const t=JSON.stringify(data);
-    if(t.length>4500000){ toast('备份太大（'+Math.round(t.length/1024)+'KB），先删些相册照片再试'); return; }
-    try{ await navigator.clipboard.writeText(t); }
-    catch(e){
-      const ta=document.createElement('textarea'); ta.value=t;
-      ta.style.cssText='position:fixed;opacity:0;top:0;left:0';
-      document.body.appendChild(ta); ta.focus(); ta.select();
-      const ok=document.execCommand('copy'); ta.remove();
-      if(!ok) throw e;
-    }
-    toast('已复制到剪贴板，去新版点"剪贴板导入"');
-  }catch(e){ toast('复制失败：'+(e.message||e)); }
-}
-async function pasteBackup(){
-  try{
-    const t=await navigator.clipboard.readText();
-    if(!t||t.length<10){ toast('剪贴板是空的，先去旧版点"复制备份"'); return; }
-    const d=JSON.parse(t);
-    if(!d||!d.settings){ toast('剪贴板内容不是融椿备份'); return; }
-    S=mergeData(d); save(); initAll();
-    toast('导入成功');
-  }catch(e){ toast('导入失败：剪贴板里没有有效备份'); }
-}
 function importAll(){ $('#all-file').click(); }
 function allFileChange(ev){ const f=ev.target.files[0]; if(!f) return;
   const r=new FileReader(); r.onload=()=>{ try{ const d=JSON.parse(r.result);
@@ -2119,23 +2095,7 @@ function tsOf(raw){ try{ return (JSON.parse(raw).savedAt)||0; }catch(e){ return 
     if(localStorage.getItem('_rc_probe')!=='1') throw 0;
     localStorage.removeItem('_rc_probe');
   }catch(e){ toast('⚠️ 当前打开方式无法保存数据'); } }, 1800);
-  /* 全新安装保险丝：没数据时提示从剪贴板一键恢复 */
-  setTimeout(()=>{ try{
-    if(S.msgs && S.msgs.length < 3 && !document.getElementById('rc-restore')){
-      const b=document.createElement('div'); b.id='rc-restore';
-      b.style.cssText='position:fixed;left:50%;bottom:110px;transform:translateX(-50%);z-index:999;background:#fff;border:2px solid #f291ac;border-radius:14px;padding:14px 18px;font-size:13px;box-shadow:0 6px 20px rgba(0,0,0,.18);text-align:center;max-width:86%';
-      b.innerHTML='<div style="color:#5a3a44;margin-bottom:10px;line-height:1.6">检测到全新安装 📦<br>如果剪贴板里存着备份，点下面一键恢复</div>';
-      const btn=document.createElement('button');
-      btn.textContent='一键恢复';
-      btn.style.cssText='background:#f291ac;color:#fff;border:none;border-radius:10px;padding:9px 26px;font-size:15px;cursor:pointer';
-      btn.onclick=()=>{ pasteBackup(); setTimeout(()=>{ if(S.msgs.length>=3) b.remove(); },1500); };
-      const x=document.createElement('span'); x.textContent='✕';
-      x.style.cssText='position:absolute;top:8px;right:12px;color:#bbb;cursor:pointer;font-size:14px;padding:4px';
-      x.onclick=()=>b.remove();
-      b.appendChild(btn); b.appendChild(x);
-      document.body.appendChild(b);
-    }
-  }catch(e){} }, 2400);
+
 })();
 if('serviceWorker' in navigator){ window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{})); }
 </script>
