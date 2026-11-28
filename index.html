@@ -833,6 +833,8 @@ function playSound(){ if(!S.settings.sound) return;
 
 /* ================= 通知 ================= */
 function doNotify(text){ if(!S.settings.notify) return;
+  /* 微信逻辑：前台且正开着聊天页 → 不弹横幅（消息已在眼前） */
+  try{ if(document.visibilityState==='visible' && $('#scr-chat') && $('#scr-chat').classList.contains('open')) return; }catch(e){}
   const show=()=>new Notification(S.profile.otherName,{body:text.slice(0,60)});
   if(!('Notification' in window)) return;
   if(Notification.permission==='granted') show();
