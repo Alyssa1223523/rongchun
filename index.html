@@ -270,7 +270,7 @@ textarea{resize:none; min-height:90px; line-height:1.7}
 #toast.on{opacity:.95; transform:translateX(-50%)}
 /* ---------- 模拟通话 ---------- */
 #callui{position:absolute; inset:0; z-index:80; background:linear-gradient(180deg,#2e2227,#241a1f);
-  display:none; flex-direction:column; align-items:center; padding-top:110px; color:#f6e4ea}
+  display:none; flex-direction:column; align-items:center; padding-top:calc(150px + env(safe-area-inset-top)); color:#f6e4ea}
 #callui.on{display:flex; animation:callin .3s ease}
 @keyframes callin{from{opacity:0; transform:scale(1.04)}to{opacity:1; transform:none}}
 #callui .cavatar{position:relative; width:112px; height:112px; margin-bottom:26px}
@@ -416,7 +416,7 @@ textarea{resize:none; min-height:90px; line-height:1.7}
 .book-ans{margin-top:28px;width:82%;min-height:46px;font-size:20px;font-weight:700;color:#5a3a44;text-align:center;opacity:0;transform:translateY(10px);transition:all .45s;line-height:1.5}
 .book-ans.show{opacity:1;transform:translateY(0)}
 .book-count{margin-top:auto;padding-bottom:22px;font-size:11px;color:#c4b5ba}
-#cb-min{position:absolute;top:calc(env(safe-area-inset-top) + 14px);right:16px;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.16);display:none;align-items:center;justify-content:center;z-index:6;cursor:pointer;-webkit-tap-highlight-color:transparent}
+#cb-min{position:absolute;top:calc(env(safe-area-inset-top) + 56px);right:16px;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.16);display:none;align-items:center;justify-content:center;z-index:6;cursor:pointer;-webkit-tap-highlight-color:transparent}
 #cb-min:active{background:rgba(255,255,255,.3)}
 #callFloat{position:fixed;top:calc(env(safe-area-inset-top) + 58px);right:14px;z-index:9998;display:none;flex-direction:column;align-items:center;background:rgba(28,20,24,.94);border-radius:20px;padding:9px 9px 7px;box-shadow:0 6px 18px rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.14);cursor:pointer;animation:cfpop .25s;-webkit-tap-highlight-color:transparent}
 @keyframes cfpop{0%{transform:scale(.5);opacity:0}100%{transform:scale(1);opacity:1}}
@@ -1108,6 +1108,7 @@ function ringOnce(){ tone(450,.9,'sine',.07); }
 function startCall(type){
   call.on=true; call.type=type; call.answered=false; call.sec=0; call.incoming=false; call.rejected=false; call.missed=false;
   $('#cb-ans').style.display='none';
+  const cminS=$('#cb-min'); if(cminS) cminS.style.display='flex';
   $('#cb-mute').style.display='flex'; $('#cb-spk').style.display='flex';
   const ui=$('#callui');
   $('#call-name').textContent = S.profile.otherName;
@@ -1571,7 +1572,7 @@ const INC_LINES = [
 function updateCallFloat(){
   const f=$('#callFloat'); if(!f) return;
   const t=$('#cf-t'); if(!t) return;
-  t.textContent = call.answered ? fmtMM(call.sec) : (call.incoming ? '邀请你'+(call.type==='video'?'视频':'语音') : '呼叫中…');
+  t.textContent = call.answered ? fmtMM(call.sec) : (call.incoming ? '邀请你'+(call.type==='video'?'视频':'语音') : '正在呼叫…');
 }
 function showCallFloat(){
   let f=$('#callFloat');
@@ -1585,7 +1586,7 @@ function showCallFloat(){
   f.style.display='flex'; updateCallFloat();
 }
 function minCall(){
-  if(!call.on || !call.answered) return;
+  if(!call.on) return;
   call.min=true;
   $('#callui').style.display='none';
   const cm=$('#call-me'); if(cm) cm.style.display='none';
