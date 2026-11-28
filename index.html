@@ -2052,6 +2052,14 @@ function tsOf(raw){ try{ return (JSON.parse(raw).savedAt)||0; }catch(e){ return 
   try{ lsRaw=localStorage.getItem('simtalk_j')||localStorage.getItem('simtalk_v1'); }catch(e){}
   let best = idbRaw;
   if(lsRaw && tsOf(lsRaw) >= tsOf(best||'')) best = lsRaw;   // 时间戳相同优先本地日志
+  /* 启动守卫：iOS 冷启动时存储可能短暂不可读，重试两轮再判空，绝不拿空白覆盖真数据 */
+  for(let k=0;k<2 && !best;k++){
+    await new Promise(r=>setTimeout(r,900));
+    try{ if(idb){ idbRaw=await idbGet(); } }catch(e){}
+    try{ lsRaw=localStorage.getItem('simtalk_j'); }catch(e){}
+    best = idbRaw;
+    if(lsRaw && tsOf(lsRaw) >= tsOf(best||'')) best = lsRaw;
+  }
   if(best){ try{ S = mergeData(JSON.parse(best)); }catch(e){} }
   try{ localStorage.removeItem('simtalk_v1'); }catch(e){}   // 旧版遗留清理
   /* 字体迁移：旧的在线字体地址弃用，统一用内置本地字体 */
@@ -2064,12 +2072,31 @@ function tsOf(raw){ try{ return (JSON.parse(raw).savedAt)||0; }catch(e){ return 
     try{ if(idb){ const tx=idb.transaction('kv','readwrite'); tx.objectStore('kv').put(JSON.stringify(S),'s'); } }catch(e){} };
   window.addEventListener('pagehide', flushNow);
   document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='hidden') flushNow(); });
+  /* 申请持久化存储权限，尽量不被系统清理 */
+  try{ if(navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(()=>{}); }catch(e){}
   /* 存储自检：连写都写不进去就立刻大声提醒 */
   setTimeout(()=>{ try{
     localStorage.setItem('_rc_probe','1');
     if(localStorage.getItem('_rc_probe')!=='1') throw 0;
     localStorage.removeItem('_rc_probe');
-  }catch(e){ toast('⚠️ 当前打开方式无法保存数据，请删除主屏幕图标后重新添加'); } }, 1800);
+  }catch(e){ toast('⚠️ 当前打开方式无法保存数据'); } }, 1800);
+  /* 全新安装保险丝：没数据时提示从剪贴板一键恢复 */
+  setTimeout(()=>{ try{
+    if(S.msgs && S.msgs.length < 3 && !document.getElementById('rc-restore')){
+      const b=document.createElement('div'); b.id='rc-restore';
+      b.style.cssText='position:fixed;left:50%;bottom:110px;transform:translateX(-50%);z-index:999;background:#fff;border:2px solid #f291ac;border-radius:14px;padding:14px 18px;font-size:13px;box-shadow:0 6px 20px rgba(0,0,0,.18);text-align:center;max-width:86%';
+      b.innerHTML='<div style="color:#5a3a44;margin-bottom:10px;line-height:1.6">检测到全新安装 📦<br>如果剪贴板里存着备份，点下面一键恢复</div>';
+      const btn=document.createElement('button');
+      btn.textContent='一键恢复';
+      btn.style.cssText='background:#f291ac;color:#fff;border:none;border-radius:10px;padding:9px 26px;font-size:15px;cursor:pointer';
+      btn.onclick=()=>{ pasteBackup(); setTimeout(()=>{ if(S.msgs.length>=3) b.remove(); },1500); };
+      const x=document.createElement('span'); x.textContent='✕';
+      x.style.cssText='position:absolute;top:8px;right:12px;color:#bbb;cursor:pointer;font-size:14px;padding:4px';
+      x.onclick=()=>b.remove();
+      b.appendChild(btn); b.appendChild(x);
+      document.body.appendChild(b);
+    }
+  }catch(e){} }, 2400);
 })();
 if('serviceWorker' in navigator){ window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{})); }
 </script>
