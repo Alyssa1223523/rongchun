@@ -561,6 +561,7 @@ textarea{resize:none; min-height:90px; line-height:1.7}
   <div class="sheet" id="sheet"></div>
 </div>
 <div id="callui">
+  <div id="cb-min" title="最小化"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14"/></svg></div>
   <video class="me" id="call-me" playsinline muted></video>
   <div class="cavatar" id="call-av"></div>
   <div class="cname" id="call-name"></div>
@@ -1123,8 +1124,10 @@ function answerCall(){
   clearInterval(call.ringI); clearTimeout(call.endT);
   $('#callui').classList.remove('calling');
   tone(660,.12,'sine',.1); setTimeout(()=>tone(880,.18,'sine',.1),130);
+  const cmin=$('#cb-min'); if(cmin) cmin.style.display='flex';
   call.tickI=setInterval(()=>{ call.sec++;
     $('#call-stat').textContent = fmtMM(call.sec) + (call.type==='video'?' · 视频通话':'');
+    updateCallFloat();
   },1000);
   $('#call-stat').textContent='00:00' + (call.type==='video'?' · 视频通话':'');
 }
@@ -1136,8 +1139,11 @@ function endCall(msg){
   if(call.cam){ call.cam.getTracks().forEach(t=>t.stop()); call.cam=null; }
   const sec=call.sec, answered=call.answered, ctype=call.type||'audio', incoming=!!call.incoming, rejected=!!call.rejected;
   $('#callui').classList.remove('on','calling');
+  $('#callui').style.display='';
   $('#call-me').style.display='none';
   $('#cb-ans').style.display='none';
+  const cmin1=$('#cb-min'); if(cmin1) cmin1.style.display='none';
+  const cf=$('#callFloat'); if(cf) cf.remove();
   let rec, tTxt;
   if(answered){ rec='通话时长 '+fmtMM(sec); tTxt='通话结束'; }
   else if(incoming){ rec=rejected?'已拒绝':'未接听'; tTxt=rejected?'已拒绝':'对方已取消'; }
@@ -1555,6 +1561,39 @@ const INC_LINES = [
  '嗯，没什么事。就是想听听你声音。','吃饭了吗？不许说忘了。',
  '今天……还行。就是有点想你。','楼下。下来拿东西，顺路买的。'
 ];
+/* ================= 通话最小化（微信同款悬浮气泡） ================= */
+function updateCallFloat(){
+  const f=$('#callFloat'); if(!f) return;
+  const t=$('#cf-t'); if(!t) return;
+  t.textContent = call.answered ? fmtMM(call.sec) : (call.incoming ? '邀请你'+(call.type==='video'?'视频':'语音') : '呼叫中…');
+}
+function showCallFloat(){
+  let f=$('#callFloat');
+  if(!f){
+    f=document.createElement('div'); f.id='callFloat';
+    f.innerHTML='<div class="cf-av" id="cf-av"></div><div class="cf-t" id="cf-t">00:00</div>';
+    f.onclick=()=>restoreCall();
+    document.body.appendChild(f);
+  }
+  $('#cf-av').innerHTML=avatarHTML(S.profile.otherName,0,S.profile.otherAvatar);
+  f.style.display='flex'; updateCallFloat();
+}
+function minCall(){
+  if(!call.on || !call.answered) return;
+  call.min=true;
+  $('#callui').style.display='none';
+  const cm=$('#call-me'); if(cm) cm.style.display='none';
+  showCallFloat();
+  toast('已最小化，点气泡返回通话');
+}
+function restoreCall(){
+  call.min=false;
+  const f=$('#callFloat'); if(f) f.style.display='none';
+  $('#callui').style.display='';
+  const cm=$('#call-me'); if(cm && call.type==='video') cm.style.display='';
+}
+document.addEventListener('click',e=>{ if(e.target.closest('#cb-min')) minCall(); });
+
 function incomingCall(type){
   if(call.on) return;
   call.on=true; call.type=type; call.incoming=true; call.answered=false; call.rejected=false; call.missed=false; call.sec=0;
@@ -1565,6 +1604,7 @@ function incomingCall(type){
   $('#call-av').innerHTML = avatarHTML(S.profile.otherName,0,S.profile.otherAvatar);
   $('#call-stat').textContent = type==='video'?'邀请你视频通话…':'邀请你语音通话…';
   ui.classList.add('on','calling');
+  const cmin0=$('#cb-min'); if(cmin0) cmin0.style.display='none';
   call.ringT = setInterval(ringOnce, 1600); ringOnce();
   call.noAnsT = setTimeout(()=>{ call.missed=true; endCall(); }, rnd(16000,22000));
 }
