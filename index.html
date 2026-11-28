@@ -962,7 +962,7 @@ function incomingFlow(isProactive){
     // 甩表情包：他有表情包库存时 25% 概率发图
     if(S.stickers.other.length && Math.random()<0.25){ pushImg(pick(S.stickers.other),'other',true); return; }
     // 语音回复：开启后按概率用语音消息回你（配了 MiniMax 则真声合成）
-    if(st.voiceReply && Math.random()*100 < st.voiceProb){
+    if(st.voiceReply && Math.random() < Math.random()){
       const pool=poolCards(); const text=pool.length?pick(pool):null;
       (async()=>{ let audio='', dur=2+Math.floor(Math.random()*9);
         if(text && ttsReady()){ const u=await miniTTS(text);
@@ -1244,13 +1244,13 @@ function sendLetter(){ const t=$('#lt-title').value.trim()||'无题';
   const b=$('#lt-body').value.trim(); if(!b){ toast('信还是空的呢'); return; }
   S.letters.push({id:uid(),who:'me',title:t,text:b,ts:Date.now(),read:true});
   save(); closeMask(); renderLetters(); toast('信已寄出');
-  if(Math.random()<0.4 && !S.pendingLetter) scheduleHisLetter(60,180);  // 40% 概率他回信
+  if(Math.random()<Math.random() && !S.pendingLetter) scheduleHisLetter(60,180);  // 完全随机概率他回信
 }
 $('#btn-ask-letter').onclick=()=>{ if(S.pendingLetter){ toast('他已经在写了，耐心等等'); return; }
   scheduleHisLetter(15,60); toast('他点头了，正在给你写…'); };
 function scheduleHisLetter(minS,maxS){ S.pendingLetter={ at: Date.now()+rnd(minS,maxS)*1000 }; save(); }
 function deliverPending(){ const pool=poolCards();
-  const n=Math.min(pool.length, 2+Math.floor(Math.random()*4));
+  const n=Math.min(pool.length, 1+Math.floor(Math.random()*9));
   const body=sample(pool,n).join('\n');
   S.pendingLetter=null;
   S.letters.push({id:uid(),who:'other',title:pick(LETTER_TITLES),text:body,ts:Date.now(),read:false});
